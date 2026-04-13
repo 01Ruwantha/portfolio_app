@@ -4,6 +4,8 @@ import '../theme/app_colors.dart';
 import '../widgets/shared_widgets.dart';
 import '../services/supabase_service.dart';
 import '../models/project_model.dart';
+import '../models/comment_model.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:typed_data';
@@ -317,7 +319,96 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  Future<void> _showCommentsDialog(ProjectModel project) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surfaceContainerHigh,
+              title: Text('Comments: ${project.title}', style: GoogleFonts.manrope(color: AppColors.onSurface)),
+              content: SizedBox(
+                width: 600,
+                height: 400,
+                child: FutureBuilder<List<CommentModel>>(
+                  future: SupabaseService().fetchComments(project.id),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final comments = snapshot.data ?? [];
+                    if (comments.isEmpty) {
+                      return Center(child: Text('No comments found.', style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)));
+                    }
+                    return ListView.separated(
+                      itemCount: comments.length,
+                      separatorBuilder: (context, index) => Divider(color: AppColors.outlineVariant.withOpacity(0.1)),
+                      itemBuilder: (context, index) {
+                        final c = comments[index];
+                        return ListTile(
+                          title: Row(
+                            children: [
+                              Text(c.authorName, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
+                              const SizedBox(width: 8),
+                              Row(
+                                children: List.generate(5, (i) => Icon(
+                                  i < c.rating ? Icons.star : Icons.star_border,
+                                  size: 14,
+                                  color: AppColors.primary,
+                                )),
+                              ),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(c.content, style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
+                              const SizedBox(height: 4),
+                              Text('${c.createdAt.day}/${c.createdAt.month}/${c.createdAt.year}', style: GoogleFonts.inter(fontSize: 10, color: AppColors.outlineVariant)),
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: AppColors.surfaceContainerHigh,
+                                  title: Text('Delete Comment', style: GoogleFonts.manrope(color: AppColors.onSurface)),
+                                  content: Text('Are you sure you want to delete this comment?', style: GoogleFonts.inter(color: AppColors.onSurface)),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: const TextStyle(color: Colors.redAccent))),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await SupabaseService().deleteComment(c.id);
+                                setDialogState(() {}); // Refresh the future builder in dialog
+                                setState(() {}); // Refresh the dashboard (for rating updates)
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+              ],
+            );
+          }
+        );
+      },
+    );
+  }
+
   Future<void> _deleteProject(String id) async {
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -427,6 +518,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           Row(
             children: [
               IconButton(
+                onPressed: () => _showCommentsDialog(project),
+                icon: const Icon(Icons.chat_bubble_outline, color: AppColors.onSurfaceVariant),
+                tooltip: 'Manage Comments',
+              ),
+              const SizedBox(width: 8),
+              IconButton(
                 onPressed: () => _showProjectDialog(project: project),
                 icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
                 tooltip: 'Edit Project',
@@ -438,6 +535,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 tooltip: 'Delete Project',
               ),
             ],
+
           )
         ],
       ),

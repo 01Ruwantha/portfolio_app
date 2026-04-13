@@ -180,8 +180,52 @@ class SupabaseService {
     }).eq('id', projectId);
   }
 
-  /// Delete a comment
+  /// Delete a comment and update project rating
   Future<void> deleteComment(String commentId) async {
-    await _client.from('comments').delete().eq('id', commentId);
+    try {
+      // 1. Fetch the comment to get projectId and rating before deleting
+      final commentResponse = await _client
+          .from('comments')
+          .select('project_id, rating')
+          .eq('id', commentId)
+          .single();
+      
+      final String projectId = commentResponse['project_id'];
+      final int deletedRating = commentResponse['rating'] as int;
+
+      // 2. Delete the comment
+      await _client.from('comments').delete().eq('id', commentId);
+
+      // 3. Fetch project to update ratings
+      final projectResponse = await _client
+          .from('projects')
+          .select('avg_rating, total_ratings')
+          .eq('id', projectId)
+          .single();
+      
+      final double oldAvg = (projectResponse['avg_rating'] ?? 0).toDouble();
+      final int oldTotal = projectResponse['total_ratings'] as int? ?? 0;
+      
+      if (oldTotal > 1) {
+        final int newTotal = oldTotal - 1;
+        // Recalculate average: (Sum - deleted) / newTotal
+        final double newAvg = ((oldAvg * oldTotal) - deletedRating) / newTotal;
+        
+        await _client.from('projects').update({
+          'avg_rating': newAvg,
+          'total_ratings': newTotal,
+        }).eq('id', projectId);
+      } else {
+        // If it was the only rating
+        await _client.from('projects').update({
+          'avg_rating': 0,
+          'total_ratings': 0,
+        }).eq('id', projectId);
+      }
+    } catch (e) {
+      print('Error deleting comment and updating ratings: $e');
+      rethrow;
+    }
   }
+
 }
