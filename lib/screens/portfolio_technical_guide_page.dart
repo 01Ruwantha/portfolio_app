@@ -9,26 +9,36 @@ class PortfolioTechnicalGuidePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceContainerLow,
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 100),
+            padding: const EdgeInsets.symmetric(horizontal: 160),
             children: [
-              const SizedBox(height: 140),
+              const SizedBox(height: 180),
               Text(
-                'Flutter & Supabase Portfolio Application Guide',
+                'SYSTEM //\nTECHNICAL SPECIFICATION',
                 style: GoogleFonts.manrope(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 56,
+                  fontWeight: FontWeight.w800,
                   color: AppColors.onSurface,
-                  letterSpacing: -0.96,
+                  letterSpacing: -1.12,
+                  height: 1.0,
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 24),
+              Text(
+                'Architectural deployment guide for the Flutter & Supabase ecosystem.',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  color: AppColors.onSurfaceVariant.withOpacity(0.6),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 80),
               _buildSection(
-                title: '1. SQL Schema (PostgreSQL)',
-                content: '''-- Projects table
+                title: 'DATABASE SCHEMA .SQL',
+                content: '''-- Structural definition for PostgreSQL engine
 CREATE TABLE projects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -37,27 +47,30 @@ CREATE TABLE projects (
   image_url TEXT,
   is_hidden BOOLEAN DEFAULT FALSE,
   avg_rating DECIMAL DEFAULT 0,
-  total_ratings INT DEFAULT 0
+  total_ratings INT DEFAULT 0,
+  gallery_urls TEXT[] DEFAULT '{}'
 );
 
--- Ratings table
-CREATE TABLE ratings (
+-- Real-time discussion & engagement
+CREATE TABLE comments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-  device_id TEXT NOT NULL,
-  score INT CHECK (score >= 1 AND score <= 5),
-  UNIQUE(project_id, device_id)
+  author_name TEXT NOT NULL,
+  author_email TEXT NOT NULL,
+  content TEXT NOT NULL,
+  rating INT DEFAULT 5,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );''',
                 isCode: true,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
               _buildSection(
-                title: '2. Supabase Configuration',
-                content: '''1. Authentication: Go to Auth -> Users. Create an admin account (email/password).
-2. Storage: Create a public bucket named project-images. Set RLS to allow public SELECT and authenticated INSERT/DELETE.
-3. API Keys: Copy your SUPABASE_URL and SUPABASE_ANON_KEY.''',
+                title: 'INFRASTRUCTURE PROVISIONING',
+                content: '''[AUTH] Go to Supabase Auth. Provision one admin identity for portfolio curation.
+[STORAGE] Create 'project-images' bucket. Set RLS: SELECT=public, INSERT/DELETE=authenticated.
+[ENVIRONMENT] Update .env or Dart Environment with SUPABASE_URL and SUPABASE_ANON_KEY.''',
               ),
-              const SizedBox(height: 100),
+              const SizedBox(height: 120),
             ],
           ),
           const Positioned(
@@ -75,36 +88,49 @@ CREATE TABLE ratings (
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.manrope(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.onSurface,
+                letterSpacing: 2.0,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant.withOpacity(0.15)),
-          ),
-          child: Text(
-            content,
-            style: isCode
-                ? GoogleFonts.robotoMono(
-                    fontSize: 14,
-                    color: AppColors.primary,
-                    height: 1.5,
-                  )
-                : GoogleFonts.inter(
-                    fontSize: 16,
-                    color: AppColors.onSurfaceVariant,
-                    height: 1.5,
-                  ),
+        const SizedBox(height: 24),
+        GlassmorphismContainer(
+          borderRadius: 24,
+          padding: const EdgeInsets.all(40),
+          color: AppColors.surfaceContainerLow.withOpacity(0.5),
+          child: SizedBox(
+            width: double.infinity,
+            child: Text(
+              content,
+              style: isCode
+                  ? GoogleFonts.robotoMono(
+                      fontSize: 14,
+                      color: AppColors.primary.withOpacity(0.8),
+                      height: 1.8,
+                    )
+                  : GoogleFonts.inter(
+                      fontSize: 16,
+                      color: AppColors.onSurfaceVariant,
+                      height: 1.8,
+                    ),
+            ),
           ),
         ),
       ],

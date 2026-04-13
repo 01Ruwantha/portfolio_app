@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/project_model.dart';
+import '../models/comment_model.dart';
 
 class SupabaseService {
   final SupabaseClient _client = Supabase.instance.client;
@@ -127,5 +128,60 @@ class SupabaseService {
       print('Unexpected Upload error: $e');
       return null;
     }
+  }
+
+  /// Fetch comments for a project
+  Future<List<CommentModel>> fetchComments(String projectId) async {
+    final response = await _client
+        .from('comments')
+        .select()
+        .eq('project_id', projectId)
+        .order('created_at', ascending: false);
+
+    return (response as List<dynamic>)
+        .map((e) => CommentModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Add a comment and update project rating
+  Future<void> addComment({
+    required String projectId, 
+    required int rating, 
+    required String content,
+    required String authorName,
+    required String authorEmail,
+  }) async {
+    // 1. Add the comment
+    await _client.from('comments').insert({
+      'project_id': projectId,
+      'rating': rating,
+      'content': content,
+      'author_name': authorName,
+      'author_email': authorEmail,
+    });
+
+    // 2. Fetch current project to update ratings
+    final projectResponse = await _client
+        .from('projects')
+        .select('avg_rating, total_ratings')
+        .eq('id', projectId)
+        .single();
+    
+    final double oldAvg = (projectResponse['avg_rating'] ?? 0).toDouble();
+    final int oldTotal = projectResponse['total_ratings'] as int? ?? 0;
+    
+    final int newTotal = oldTotal + 1;
+    final double newAvg = (oldAvg * oldTotal + rating) / newTotal;
+
+    // 3. Update project totals
+    await _client.from('projects').update({
+      'avg_rating': newAvg,
+      'total_ratings': newTotal,
+    }).eq('id', projectId);
+  }
+
+  /// Delete a comment
+  Future<void> deleteComment(String commentId) async {
+    await _client.from('comments').delete().eq('id', commentId);
   }
 }

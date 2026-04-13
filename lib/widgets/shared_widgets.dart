@@ -20,7 +20,8 @@ class MouseRegionCursor extends StatelessWidget {
 class PrimaryButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
-  const PrimaryButton({super.key, required this.text, this.onPressed});
+  final bool isSecondary;
+  const PrimaryButton({super.key, required this.text, this.onPressed, this.isSecondary = false});
 
   @override
   State<PrimaryButton> createState() => _PrimaryButtonState();
@@ -31,6 +32,9 @@ class _PrimaryButtonState extends State<PrimaryButton> {
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = widget.isSecondary ? AppColors.secondaryContainer : AppColors.primary;
+    final fgColor = widget.isSecondary ? AppColors.onSecondaryContainer : AppColors.onPrimary;
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => isHovered = true),
@@ -39,35 +43,32 @@ class _PrimaryButtonState extends State<PrimaryButton> {
         onTap: widget.onPressed,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-        transform: Matrix4.identity()..scale(isHovered ? 1.02 : 1.0),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.primaryContainer],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.identity()..scale(isHovered ? 1.04 : 1.0),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(100),
+            boxShadow: isHovered
+                ? [
+                    BoxShadow(
+                      color: bgColor.withOpacity(0.4),
+                      blurRadius: 32,
+                      offset: const Offset(0, 12),
+                    )
+                  ]
+                : [],
           ),
-          borderRadius: BorderRadius.circular(100),
-          boxShadow: isHovered
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.6),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  )
-                ]
-              : [],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-        child: Text(
-          widget.text,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF004A5D),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+          child: Text(
+            widget.text,
+            style: GoogleFonts.inter(
+              color: fgColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -77,12 +78,14 @@ class GlassmorphismContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
   final EdgeInsets padding;
+  final Color? color;
 
   const GlassmorphismContainer({
     super.key,
     required this.child,
     this.borderRadius = 16,
     this.padding = EdgeInsets.zero,
+    this.color,
   });
 
   @override
@@ -90,14 +93,14 @@ class GlassmorphismContainer extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: AppColors.surfaceBright.withOpacity(0.6),
+            color: color ?? AppColors.surfaceContainerLow.withOpacity(0.7),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: AppColors.outlineVariant.withOpacity(0.15),
+              color: AppColors.outlineVariant.withOpacity(0.1),
               width: 1,
             ),
           ),
@@ -197,63 +200,92 @@ class _ProjectCardState extends State<ProjectCard> {
           onEnter: (_) => setState(() => isHovered = true),
           onExit: (_) => setState(() => isHovered = false),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutQuart,
             height: widget.height,
-            transform: Matrix4.translationValues(0, isHovered ? -8.0 : 0, 0),
+            transform: Matrix4.translationValues(0, isHovered ? -12.0 : 0, 0),
             decoration: BoxDecoration(
-              color: isHovered ? AppColors.surfaceContainerHighest : AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(24),
-              image: widget.imageUrl != null 
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(widget.imageUrl!),
-                      fit: BoxFit.cover,
-                      colorFilter: ColorFilter.mode(
-                        Colors.black.withOpacity(isHovered ? 0.6 : 0.75), 
-                        BlendMode.darken,
-                      ),
-                    )
-                  : null,
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(32),
               boxShadow: isHovered
                   ? [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 48,
-                        offset: const Offset(0, 24),
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 64,
+                        offset: const Offset(0, 32),
                       )
                     ]
                   : [],
             ),
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
               children: [
-                Container(
-                  width: 48,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: widget.accentColor,
-                    borderRadius: BorderRadius.circular(2),
+                if (widget.imageUrl != null)
+                  Positioned.fill(
+                    child: AnimatedScale(
+                      scale: isHovered ? 1.1 : 1.0,
+                      duration: const Duration(milliseconds: 1000),
+                      curve: Curves.easeOutQuart,
+                      child: CachedNetworkImage(
+                        imageUrl: widget.imageUrl!,
+                        fit: BoxFit.cover,
+                        colorBlendMode: BlendMode.darken,
+                        color: Colors.black.withOpacity(isHovered ? 0.4 : 0.6),
+                      ),
+                    ),
+                  ),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.8),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  widget.title,
-                  style: GoogleFonts.manrope(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
-                    letterSpacing: -0.64,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  widget.description,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    color: AppColors.onSurfaceVariant,
-                    height: 1.5,
+                Padding(
+                  padding: const EdgeInsets.all(48),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: isHovered ? 80 : 48,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: widget.accentColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        widget.title,
+                        style: GoogleFonts.manrope(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onSurface,
+                          letterSpacing: -0.72,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        widget.description,
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          color: AppColors.onSurfaceVariant.withOpacity(0.8),
+                          height: 1.6,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ],

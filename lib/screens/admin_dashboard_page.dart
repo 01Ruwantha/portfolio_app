@@ -29,34 +29,48 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceContainerLow,
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // Background Glow
+          Positioned(
+            bottom: -300,
+            right: -200,
+            child: Container(
+              width: 800,
+              height: 800,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withOpacity(0.03),
+              ),
+            ),
+          ),
           ListView(
             padding: const EdgeInsets.symmetric(horizontal: 100),
             children: [
-              const SizedBox(height: 140),
+              const SizedBox(height: 160),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Digital Architect Control',
+                        'Command Center',
                         style: GoogleFonts.manrope(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 64,
+                          fontWeight: FontWeight.w800,
                           color: AppColors.onSurface,
-                          letterSpacing: -0.96,
+                          letterSpacing: -1.28,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
                       Text(
-                        'Orchestrate your architectural vision and project data from a centralized interface.',
+                        'Orchestrate your architectural vision and dynamic project data.',
                         style: GoogleFonts.inter(
-                          fontSize: 18,
-                          color: AppColors.onSurfaceVariant,
+                          fontSize: 20,
+                          color: AppColors.onSurfaceVariant.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -69,40 +83,60 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
                         },
                         child: Text(
-                          'Logout',
-                          style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
+                          'Logout Session',
+                          style: GoogleFonts.inter(
+                            color: AppColors.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 24),
-                      PrimaryButton(text: '+ Add New Project', onPressed: () => _showProjectDialog()),
+                      const SizedBox(width: 32),
+                      PrimaryButton(
+                        text: '+ New Project', 
+                        onPressed: () => _showProjectDialog(),
+                      ),
                     ],
                   )
                 ],
               ),
               const SizedBox(height: 80),
               const DatabaseUsageCard(),
-              Text(
-                'Project Inventory',
-                style: GoogleFonts.manrope(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurface,
-                ),
+              const SizedBox(height: 48),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Active Portfolio Inventory',
+                    style: GoogleFonts.manrope(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
+                      letterSpacing: -0.64,
+                    ),
+                  ),
+                  Text(
+                    'Managed via Supabase Storage',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.outlineVariant,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               FutureBuilder<List<ProjectModel>>(
                 future: SupabaseService().fetchAllProjects(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                      return const Padding(
-                       padding: EdgeInsets.symmetric(vertical: 40),
+                       padding: EdgeInsets.symmetric(vertical: 80),
                        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
                      );
                   }
                   
                   final projects = snapshot.data ?? [];
                   if (projects.isEmpty) {
-                    return _buildStaticInventory(); // fallback
+                    return _buildStaticInventory();
                   }
 
                   return Column(
@@ -110,7 +144,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   );
                 },
               ),
-              const SizedBox(height: 100),
+              const SizedBox(height: 120),
             ],
           ),
           const Positioned(
@@ -315,67 +349,93 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   Widget _buildInventoryItem(BuildContext context, ProjectModel project) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.15)),
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.1)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (project.imageUrl != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: project.imageUrl!,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorWidget: (context, url, error) => Container(
-                  width: 60,
-                  height: 60,
-                  color: AppColors.surfaceContainerHighest,
-                  child: const Icon(Icons.broken_image, size: 20),
-                ),
-              ),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(16),
+              image: project.imageUrl != null 
+                  ? DecorationImage(
+                      image: CachedNetworkImageProvider(project.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            const SizedBox(width: 24),
-          ],
+            child: project.imageUrl == null 
+                ? const Icon(Icons.architecture, color: AppColors.outlineVariant) 
+                : null,
+          ),
+          const SizedBox(width: 32),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  project.title,
-                  style: GoogleFonts.manrope(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      project.title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                    if (project.isHidden) ...[
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryContainer.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          'DRAFT',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.onSecondaryContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   project.description,
                   style: GoogleFonts.inter(
                     fontSize: 16,
-                    color: AppColors.onSurfaceVariant,
+                    color: AppColors.onSurfaceVariant.withOpacity(0.6),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 32),
           Row(
             children: [
-              TextButton(
+              IconButton(
                 onPressed: () => _showProjectDialog(project: project),
-                child: Text('Edit', style: GoogleFonts.inter(color: AppColors.primary)),
+                icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+                tooltip: 'Edit Project',
               ),
-              const SizedBox(width: 16),
-              TextButton(
+              const SizedBox(width: 8),
+              IconButton(
                 onPressed: () => _deleteProject(project.id),
-                child: Text('Delete', style: GoogleFonts.inter(color: Colors.redAccent)),
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                tooltip: 'Delete Project',
               ),
             ],
           )
@@ -417,50 +477,70 @@ class DatabaseUsageCard extends StatelessWidget {
         final usedStorageMB = (storageSize / (1024 * 1024)).toStringAsFixed(2);
         final storageProgress = (storageSize / maxBytes).clamp(0.0, 1.0);
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 80),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant.withOpacity(0.15)),
-          ),
+        return GlassmorphismContainer(
+          borderRadius: 32,
+          padding: const EdgeInsets.all(48),
+          color: AppColors.surfaceContainerHigh.withOpacity(0.2),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Resource Utilization',
-                      style: GoogleFonts.manrope(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Resource Infrastructure',
+                        style: GoogleFonts.manrope(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onSurface,
+                          letterSpacing: -0.64,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Monitoring your database and storage against free tier limits.',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: AppColors.onSurfaceVariant,
+                      const SizedBox(height: 8),
+                      Text(
+                        'Monitoring database and storage utilization against high-performance limits.',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          color: AppColors.onSurfaceVariant.withOpacity(0.7),
+                        ),
                       ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.bolt, color: AppColors.primary, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Tier: Free/Open',
+                          style: GoogleFonts.inter(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(32),
-                child: Row(
-                  children: [
-                    Expanded(child: _buildUsageItem('Database Size', usedDBMB, dbProgress, dbSize == null ? 'RPC function "get_db_size" missing' : null)),
-                    const SizedBox(width: 48),
-                    Expanded(child: _buildUsageItem('Storage Usage (Images)', usedStorageMB, storageProgress, null)),
-                  ],
-                ),
+              const SizedBox(height: 64),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildUsageItem('Database Cluster', usedDBMB, dbProgress, dbSize == null ? 'RPC logic pending' : null)),
+                  const SizedBox(width: 80),
+                  Expanded(child: _buildUsageItem('Cloud Storage', usedStorageMB, storageProgress, null)),
+                ],
               ),
             ],
           ),

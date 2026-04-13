@@ -27,12 +27,7 @@ class PortfolioHomePage extends StatelessWidget {
               const SizedBox(height: 60),
             ],
           ),
-          const Positioned(
-            top: 24,
-            left: 0,
-            right: 0,
-            child: TopNavigation(),
-          ),
+          const Positioned(top: 24, left: 0, right: 0, child: TopNavigation()),
         ],
       ),
     );
@@ -47,30 +42,47 @@ class HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: padding),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Redefining the\nGeometry of\nDigital Spaces.',
-            style: GoogleFonts.manrope(
-              fontSize: 84,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-              letterSpacing: -1.68,
-              color: AppColors.onSurface,
+          Expanded(
+            flex: 7,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Redefining THE\nGeometry OF\nDigital Spaces.',
+                  style: GoogleFonts.manrope(
+                    fontSize: 100,
+                    fontWeight: FontWeight.w800,
+                    height: 1.0,
+                    letterSpacing: -2.0,
+                    color: AppColors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 48),
+                SizedBox(
+                  width: 600,
+                  child: Text(
+                    'We synthesize structural precision with luminous aesthetics to create environments that breathe. Every pixel is an intentional choice in our architectural journey.',
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      color: AppColors.onSurfaceVariant.withOpacity(0.8),
+                      height: 1.6,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 64),
+                PrimaryButton(
+                  text: 'View Works',
+                  onPressed: () {
+                    // Smooth scroll logic could go here
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 32),
-          Text(
-            'We synthesize structural precision with luminous aesthetics to create environments that breathe.\nEvery pixel is an intentional choice in our architectural journey.',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              color: AppColors.onSurfaceVariant,
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 56),
-          const PrimaryButton(text: 'View Works'),
+          const Expanded(flex: 3, child: SizedBox()),
         ],
       ),
     );
@@ -84,54 +96,110 @@ class ProjectsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surfaceContainerLow,
-      padding: EdgeInsets.symmetric(horizontal: padding, vertical: 100),
+      color: Colors.transparent, // Background handled by parent or decoration
+      padding: EdgeInsets.symmetric(horizontal: padding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Featured Structures',
-            style: GoogleFonts.manrope(
-              fontSize: 48,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.96,
-              color: AppColors.onSurface,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Featured\nStructures',
+                style: GoogleFonts.manrope(
+                  fontSize: 56,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.12,
+                  color: AppColors.onSurface,
+                  height: 1.1,
+                ),
+              ),
+              SizedBox(
+                width: 400,
+                child: Text(
+                  'A curated selection of industrial, residential, and conceptual digital architectures—each a study in material transparency.',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    color: AppColors.onSurfaceVariant,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'A curated selection of industrial, residential, and conceptual digital architectures.',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 80),
+          const SizedBox(height: 120),
           FutureBuilder<List<ProjectModel>>(
             future: SupabaseService().fetchVisibleProjects(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
               }
               final projects = snapshot.data ?? [];
               if (projects.isEmpty) {
-                return _buildStaticProjects(context);
+                return _buildAsymmetricGrid(context);
               }
 
-              return Wrap(
-                spacing: 48,
-                runSpacing: 48,
-                children: projects.map((p) => SizedBox(
-                  width: 420,
-                  child: ProjectCard(
-                    title: p.title,
-                    description: p.description,
-                    imageUrl: p.imageUrl,
-                    accentColor: AppColors.primary,
-                    height: 500,
-                    onTap: () => Navigator.pushNamed(context, '/project', arguments: p),
-                  ),
-                )).toList(),
+              return Column(
+                children: List.generate((projects.length / 2).ceil(), (index) {
+                  final leftIndex = index * 2;
+                  final rightIndex = leftIndex + 1;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 120),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top: index.isEven ? 0 : 100,
+                            ),
+                            child: ProjectCard(
+                              title: projects[leftIndex].title,
+                              description: projects[leftIndex].description,
+                              imageUrl: projects[leftIndex].imageUrl,
+                              accentColor: AppColors.primary,
+                              height: 600,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                '/project',
+                                arguments: projects[leftIndex],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 80),
+                        Expanded(
+                          flex: 5,
+                          child: rightIndex < projects.length
+                              ? Padding(
+                                  padding: EdgeInsets.only(
+                                    top: index.isEven ? 100 : 0,
+                                  ),
+                                  child: ProjectCard(
+                                    title: projects[rightIndex].title,
+                                    description:
+                                        projects[rightIndex].description,
+                                    imageUrl: projects[rightIndex].imageUrl,
+                                    accentColor: const Color(0xFFCFDEF5),
+                                    height: 600,
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      '/project',
+                                      arguments: projects[rightIndex],
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox(),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               );
             },
           ),
@@ -140,52 +208,54 @@ class ProjectsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildStaticProjects(BuildContext context) {
+  Widget _buildAsymmetricGrid(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 4,
+              flex: 5,
               child: ProjectCard(
                 title: 'The Luminescent Monolith',
-                description: 'A vertical ecosystem utilizing glassmorphic aesthetics and renewable energy integration for urban high-density living.',
+                description:
+                    'A vertical ecosystem utilizing glassmorphic aesthetics and renewable energy integration for urban high-density living.',
                 accentColor: AppColors.primary,
-                height: 580,
+                height: 620,
                 onTap: () => Navigator.pushNamed(context, '/project'),
               ),
             ),
-            const SizedBox(width: 48),
+            const SizedBox(width: 80),
             Expanded(
               flex: 5,
               child: Padding(
                 padding: const EdgeInsets.only(top: 100.0),
                 child: ProjectCard(
                   title: 'Slate Pavilion',
-                  description: 'A residential study in brutalist minimalism, balancing raw concrete textures with warm ambient luminescence.',
+                  description:
+                      'A residential study in brutalist minimalism, balancing raw concrete textures with warm ambient luminescence.',
                   accentColor: const Color(0xFFCFDEF5),
-                  height: 500,
+                  height: 540,
                   onTap: () => Navigator.pushNamed(context, '/project'),
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 100),
+        const SizedBox(height: 120),
         Center(
           child: SizedBox(
-            width: 900,
+            width: 1000,
             child: ProjectCard(
               title: 'Lume Museum',
-              description: 'An experimental public space designed to reactive the senses through rhythmic shadow play and interactive surfaces.',
+              description:
+                  'An experimental public space designed to reactive the senses through rhythmic shadow play and interactive surfaces.',
               accentColor: const Color(0xFF89A5FF),
-              height: 440,
+              height: 480,
               onTap: () => Navigator.pushNamed(context, '/project'),
             ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -231,7 +301,9 @@ class FooterSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                  border: Border.all(
+                    color: AppColors.outlineVariant.withOpacity(0.3),
+                  ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 alignment: Alignment.centerLeft,
@@ -287,7 +359,7 @@ class FooterSection extends StatelessWidget {
                 ],
               ),
             ],
-          )
+          ),
         ],
       ),
     );
