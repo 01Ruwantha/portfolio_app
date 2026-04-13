@@ -173,6 +173,9 @@ class ProjectCard extends StatefulWidget {
   final double height;
   final String? imageUrl;
   final VoidCallback? onTap;
+  final String? index;
+  final String? year;
+  final String? category;
 
   const ProjectCard({
     super.key,
@@ -182,7 +185,11 @@ class ProjectCard extends StatefulWidget {
     required this.height,
     this.imageUrl,
     this.onTap,
+    this.index,
+    this.year,
+    this.category,
   });
+
 
   @override
   State<ProjectCard> createState() => _ProjectCardState();
@@ -248,22 +255,63 @@ class _ProjectCardState extends State<ProjectCard> {
                     ),
                   ),
                 ),
+                if (widget.index != null)
+                  Positioned(
+                    top: 32,
+                    right: 32,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.2)),
+                      ),
+                      child: Text(
+                        widget.index!,
+                        style: GoogleFonts.manrope(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.all(48),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: isHovered ? 80 : 48,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: widget.accentColor,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                      Row(
+                        children: [
+                          if (widget.category != null) ...[
+                            Text(
+                              widget.category!.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                color: widget.accentColor,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Container(width: 4, height: 4, decoration: BoxDecoration(color: AppColors.outlineVariant.withOpacity(0.3), shape: BoxShape.circle)),
+                            const SizedBox(width: 16),
+                          ],
+                          if (widget.year != null)
+                            Text(
+                              widget.year!,
+                              style: GoogleFonts.inter(
+                                color: AppColors.onSurfaceVariant.withOpacity(0.6),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       Text(
                         widget.title,
                         style: GoogleFonts.manrope(
@@ -274,20 +322,63 @@ class _ProjectCardState extends State<ProjectCard> {
                           height: 1.1,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        widget.description,
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          color: AppColors.onSurfaceVariant.withOpacity(0.8),
-                          height: 1.6,
+                      const SizedBox(height: 20),
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 400),
+                        opacity: isHovered ? 1.0 : 0.0,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 400),
+                          height: isHovered ? 100 : 0,
+                          child: SingleChildScrollView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            child: Text(
+                              widget.description,
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                color: AppColors.onSurfaceVariant.withOpacity(0.8),
+                                height: 1.6,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (!isHovered)
+                        Text(
+                          widget.description,
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            color: AppColors.onSurfaceVariant.withOpacity(0.6),
+                            height: 1.6,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      const SizedBox(height: 32),
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        opacity: isHovered ? 1.0 : 0.0,
+                        child: Row(
+                          children: [
+                            Text(
+                              'EXPLORE STRUCTURE',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2.0,
+                                color: widget.accentColor,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(Icons.arrow_forward, color: widget.accentColor, size: 20),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
+
               ],
             ),
           ),
